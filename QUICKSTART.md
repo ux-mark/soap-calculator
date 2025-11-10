@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-## Welcome to the Intelligent Soap Formulation Calculator! 🧼
+## Welcome to the The Fairies Soap Formula Calculator! 🧼
 
 This guide will help you create your first soap recipe in minutes.
 

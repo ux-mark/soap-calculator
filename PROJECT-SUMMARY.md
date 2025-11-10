@@ -1,4 +1,4 @@
-# 🧼 Intelligent Soap Formulation Calculator - Project Summary
+# 🧼 The Fairies Soap Formula Calculator - Project Summary
 
 ## ✅ Project Status: **COMPLETE & READY FOR USE**
 

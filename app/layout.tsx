@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Intelligent Soap Formulation Calculator",
+  title: "The Fairies Soap Formula Calculator",
   description: "Create optimal soap recipes with data-driven formulation guidance",
 };
 

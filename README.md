@@ -1,4 +1,4 @@
-# Intelligent Soap Formulation Calculator
+# The Fairies Soap Formula Calculator
 
 A modern, data-driven web application for creating optimal cold process soap recipes with intelligent oil recommendations.
 
