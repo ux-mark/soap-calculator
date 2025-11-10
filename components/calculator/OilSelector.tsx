@@ -15,6 +15,7 @@ import { Search, Sparkles } from "lucide-react";
 import { OILS_DATABASE, OIL_CATEGORIES } from "@/lib/oilData";
 import { useCalculator } from "@/contexts/CalculatorContext";
 import { OilTile } from "./OilTile";
+import { getSuggestedPercentageForOil } from "@/lib/recommendations";
 
 export function OilSelector() {
   const {
@@ -23,6 +24,7 @@ export function OilSelector() {
     recommendations,
     incompatibleOilIds,
     totalPercentage,
+    results,
   } = useCalculator();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,6 +54,28 @@ export function OilSelector() {
 
   // Determine if we're in dynamic mode (< 50% selected)
   const isDynamicMode = totalPercentage < 50;
+
+  // Get suggested percentage for any oil (selected or recommended)
+  const getSuggestedPercentage = (oilId: string): number | undefined => {
+    // First check if it's in recommendations
+    const rec = recommendations.find(r => r.oil.id === oilId);
+    if (rec) return rec.suggestedPercentage;
+    
+    // If it's a selected oil, calculate its suggested percentage
+    if (!results) return undefined;
+    const selectedOil = selectedOils.find(o => o.id === oilId);
+    if (!selectedOil) return undefined;
+    
+    const context = {
+      currentOils: selectedOils,
+      currentPercentage: totalPercentage,
+      currentQualities: results.qualities,
+      currentFattyAcids: results.fattyAcids,
+    };
+    
+    const suggested = getSuggestedPercentageForOil(selectedOil, context, "hard");
+    return suggested !== undefined ? Math.round(suggested * 10) / 10 : undefined;
+  };
 
   return (
     <Card>
@@ -101,8 +125,11 @@ export function OilSelector() {
         {recommendations.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span>Recommended for your recipe</span>
+              <Sparkles className="h-4 w-4 text-green-600" />
+              <span>Recommended to add for your recipe</span>
+              <Badge variant="outline" className="text-xs">
+                {recommendations.length} oils
+              </Badge>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {recommendations.map((rec) => (
@@ -113,7 +140,11 @@ export function OilSelector() {
                   isRecommended={true}
                   isDisabled={false}
                   recommendationReason={rec.reason}
+                  suggestedPercentage={rec.suggestedPercentage}
+                  predictedImpact={rec.predictedImpact}
+                  recommendationScore={rec.score}
                   onSelect={() => addOil({ ...rec.oil, percentage: 0 })}
+                  onQuickAdd={(percentage: number) => addOil({ ...rec.oil, percentage })}
                 />
               ))}
             </div>
@@ -128,18 +159,24 @@ export function OilSelector() {
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filteredOils.map((oil) => (
-                <OilTile
-                  key={oil.id}
-                  oil={oil}
-                  isSelected={selectedOilIds.has(oil.id)}
-                  isRecommended={recommendedOilIds.has(oil.id)}
-                  isDisabled={
-                    isDynamicMode && incompatibleOilIds.has(oil.id)
-                  }
-                  onSelect={() => addOil({ ...oil, percentage: 0 })}
-                />
-              ))}
+              {filteredOils.map((oil) => {
+                const isSelected = selectedOilIds.has(oil.id);
+                const suggestedPercentage = isSelected ? getSuggestedPercentage(oil.id) : undefined;
+                
+                return (
+                  <OilTile
+                    key={oil.id}
+                    oil={oil}
+                    isSelected={isSelected}
+                    isRecommended={recommendedOilIds.has(oil.id)}
+                    isDisabled={
+                      isDynamicMode && incompatibleOilIds.has(oil.id)
+                    }
+                    suggestedPercentage={suggestedPercentage}
+                    onSelect={() => addOil({ ...oil, percentage: 0 })}
+                  />
+                );
+              })}
             </div>
           )}
         </div>

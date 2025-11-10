@@ -19,6 +19,125 @@ import {
  */
 
 /**
+ * Calculate suggested percentage for an oil based on current recipe needs
+ */
+function calculateSuggestedPercentage(
+  oil: OilData,
+  context: RecommendationContext,
+  soapType: "hard" | "liquid" = "hard"
+): number {
+  const remainingPercentage = 100 - context.currentPercentage;
+  
+  // If very little room left, suggest small amount
+  if (remainingPercentage < 10) return Math.max(5, remainingPercentage);
+  
+  // Calculate ideal percentage based on oil properties and needs
+  const needs = identifyRecipeNeeds(context.currentQualities, soapType);
+  
+  // Strong base oils should be 15-30%
+  if (oil.category === "Hard Oil" && needs.includes("hardness")) {
+    return Math.min(25, remainingPercentage);
+  }
+  
+  // Conditioning oils 10-20%
+  if (oil.fatty_acids.oleic > 50 && needs.includes("conditioning")) {
+    return Math.min(20, remainingPercentage);
+  }
+  
+  // Castor oil and specialty oils 5-10%
+  if (oil.id === "castor-oil" || oil.fatty_acids.ricinoleic > 80) {
+    return Math.min(8, remainingPercentage);
+  }
+  
+  // Cleansing oils like coconut 15-25%
+  if (oil.fatty_acids.lauric > 40 && needs.includes("cleansing")) {
+    return Math.min(20, remainingPercentage);
+  }
+  
+  // Default suggestion
+  return Math.min(15, remainingPercentage);
+}
+
+/**
+ * Calculate predicted impact of adding an oil at a given percentage
+ */
+function calculatePredictedImpact(
+  oil: OilData,
+  percentage: number,
+  context: RecommendationContext,
+  soapType: "hard" | "liquid" = "hard"
+): {
+  qualityChanges: { [key in keyof SoapQualities]?: number };
+  improvementText: string;
+} {
+  // Simulate adding this oil
+  const testOils: SelectedOil[] = [
+    ...context.currentOils,
+    { ...oil, percentage },
+  ];
+  
+  // Normalize percentages
+  const total = testOils.reduce((sum, o) => sum + o.percentage, 0);
+  const normalizedOils = testOils.map((o) => ({
+    ...o,
+    percentage: (o.percentage / total) * 100,
+  }));
+  
+  // Calculate projected qualities
+  const projectedFattyAcids = calculateFattyAcidProfile(normalizedOils);
+  const projectedQualities = calculateSoapQualities(projectedFattyAcids, normalizedOils);
+  
+  // Calculate changes
+  const qualityChanges: { [key in keyof SoapQualities]?: number } = {};
+  const improvements: string[] = [];
+  const qualityRanges = getQualityRanges(soapType);
+  
+  const qualityKeys: (keyof SoapQualities)[] = [
+    "hardness", "cleansing", "conditioning", "bubbly", "creamy", "iodine", "ins"
+  ];
+  
+  qualityKeys.forEach((quality) => {
+    const currentValue = context.currentQualities[quality];
+    const projectedValue = projectedQualities[quality];
+    const change = projectedValue - currentValue;
+    
+    if (Math.abs(change) > 1) {
+      qualityChanges[quality] = change;
+      
+      // Check if this brings the value into or closer to ideal range
+      const range = qualityRanges[quality];
+      if (range.ideal) {
+        const currentDistance = Math.min(
+          Math.abs(currentValue - range.ideal.min),
+          Math.abs(currentValue - range.ideal.max)
+        );
+        const projectedDistance = Math.min(
+          Math.abs(projectedValue - range.ideal.min),
+          Math.abs(projectedValue - range.ideal.max)
+        );
+        
+        if (projectedDistance < currentDistance) {
+          improvements.push(`${quality} to ${projectedValue}`);
+        }
+      }
+    }
+  });
+  
+  // Generate improvement text
+  let improvementText = "";
+  if (improvements.length > 0) {
+    const topImprovement = improvements[0];
+    improvementText = `This will bring ${topImprovement}`;
+  } else if (Object.keys(qualityChanges).length > 0) {
+    const firstChange = Object.entries(qualityChanges)[0];
+    const direction = firstChange[1] > 0 ? "increase" : "decrease";
+    improvementText = `Will ${direction} ${firstChange[0]}`;
+  }
+  
+  return { qualityChanges, improvementText };
+}
+
+/**
  * Calculate compatibility score for an oil given the current selection
  * Returns a score from 0-100
  * Now supports both hard and liquid soap formulations
@@ -30,6 +149,8 @@ function calculateCompatibilityScore(
 ): {
   score: number;
   reason: string;
+  suggestedPercentage: number;
+  predictedImpact: string;
   factors: {
     complementsFattyAcids: boolean;
     improvesQuality: string[];
@@ -53,9 +174,12 @@ function calculateCompatibilityScore(
       score += 25;
       fillsNeeds.push("base_soft_oil");
     }
+    const suggestedPercentage = 30; // Start with a good base
     return {
       score,
       reason: "Good starting oil for your recipe",
+      suggestedPercentage,
+      predictedImpact: "Great base for your soap recipe",
       factors: {
         complementsFattyAcids: true,
         improvesQuality,
@@ -145,6 +269,12 @@ function calculateCompatibilityScore(
   // Cap score at 100
   score = Math.min(100, Math.max(0, score));
 
+  // Calculate suggested percentage
+  const suggestedPercentage = calculateSuggestedPercentage(oil, context, soapType);
+  
+  // Calculate predicted impact
+  const { improvementText } = calculatePredictedImpact(oil, suggestedPercentage, context, soapType);
+
   let reason = "Complements your current selection";
   if (improvesQuality.length > 0) {
     reason = `Improves ${improvesQuality[0].replace("_", " ")}`;
@@ -155,6 +285,8 @@ function calculateCompatibilityScore(
   return {
     score,
     reason,
+    suggestedPercentage,
+    predictedImpact: improvementText,
     factors: {
       complementsFattyAcids,
       improvesQuality,
@@ -330,7 +462,7 @@ export function getRecommendedOils(
   const recommendations: OilRecommendation[] = OILS_DATABASE.filter(
     (oil) => !selectedOilIds.has(oil.id)
   ).map((oil) => {
-    const { score, reason, factors } = calculateCompatibilityScore(
+    const { score, reason, suggestedPercentage, predictedImpact, factors } = calculateCompatibilityScore(
       oil,
       context,
       soapType
@@ -339,6 +471,8 @@ export function getRecommendedOils(
       oil,
       score,
       reason,
+      suggestedPercentage,
+      predictedImpact,
       compatibilityFactors: factors,
     };
   });
@@ -384,4 +518,60 @@ export function getIncompatibleOils(
   });
 
   return incompatibleIds;
+}
+
+/**
+ * Get the reason why an oil is disabled
+ */
+export function getDisabledReason(
+  oil: OilData,
+  context: RecommendationContext,
+  soapType: "hard" | "liquid" = "hard"
+): string {
+  const { reason, factors } = calculateCompatibilityScore(oil, context, soapType);
+  
+  if (factors.improvesQuality.length === 0 && factors.fillsNeeds.length === 0) {
+    return "Cannot achieve ideal ranges with this oil";
+  }
+  
+  return `Low compatibility: ${reason}`;
+}
+
+/**
+ * Get suggested percentage for a specific oil based on current recipe
+ * This works for both selected and unselected oils
+ */
+export function getSuggestedPercentageForOil(
+  oil: OilData,
+  context: RecommendationContext,
+  soapType: "hard" | "liquid" = "hard"
+): number | undefined {
+  // Create a temporary context without this oil
+  const contextWithoutThisOil = {
+    ...context,
+    currentOils: context.currentOils.filter(o => o.id !== oil.id),
+    currentPercentage: context.currentOils
+      .filter(o => o.id !== oil.id)
+      .reduce((sum, o) => sum + o.percentage, 0),
+  };
+  
+  // If this is the only oil selected, suggest 100% (they need to add more oils for a balanced recipe)
+  if (contextWithoutThisOil.currentOils.length === 0) {
+    return 100;
+  }
+  
+  // Recalculate qualities without this oil
+  const fattyAcidsWithoutThisOil = calculateFattyAcidProfile(contextWithoutThisOil.currentOils);
+  const qualitiesWithoutThisOil = calculateSoapQualities(
+    fattyAcidsWithoutThisOil,
+    contextWithoutThisOil.currentOils
+  );
+  
+  const updatedContext = {
+    ...contextWithoutThisOil,
+    currentFattyAcids: fattyAcidsWithoutThisOil,
+    currentQualities: qualitiesWithoutThisOil,
+  };
+  
+  return calculateSuggestedPercentage(oil, updatedContext, soapType);
 }

@@ -92,6 +92,8 @@ export interface OilRecommendation {
   oil: OilData;
   score: number;
   reason: string;
+  suggestedPercentage: number;
+  predictedImpact: string;
   compatibilityFactors: {
     complementsFattyAcids: boolean;
     improvesQuality: string[];

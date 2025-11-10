@@ -12,8 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
         {children}
         <footer className="text-center py-4 text-sm text-gray-600 border-t mt-8">
           This project uses data from SoapCalc (soapcalc.net) under fair use for educational and non-commercial purposes.

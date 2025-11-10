@@ -111,15 +111,18 @@ export function CalculatorProvider({
 
   // Recalculate results and recommendations
   const recalculate = useCallback(() => {
-    if (selectedOils.length === 0 || !validation.isValid) {
+    if (selectedOils.length === 0) {
       setResults(null);
       setRecommendations([]);
       setIncompatibleOilIds(new Set());
       return;
     }
 
-    // Calculate results
+    // Calculate results (always calculate for recommendations to work)
     const newResults = calculateRecipe(inputs, selectedOils);
+    
+    // Always set results for recommendation calculations
+    // The UI components can check validation.isValid to decide what to display
     setResults(newResults);
 
     // Update recommendations
