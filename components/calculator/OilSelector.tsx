@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,8 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Sparkles } from "lucide-react";
-import { OILS_DATABASE, OIL_CATEGORIES } from "@/lib/oilData";
+import { Search, Sparkles, AlertCircle } from "lucide-react";
+import { getAllAvailableOils, getOilCategories } from "@/lib/services/oils";
+import type { OilData } from "@/lib/types";
 import { useCalculator } from "@/contexts/CalculatorContext";
 import { OilTile } from "./OilTile";
 import { getSuggestedPercentageForOil } from "@/lib/recommendations";
@@ -29,10 +30,39 @@ export function OilSelector() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [oils, setOils] = useState<OilData[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch oils and categories from database on mount
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const [oilsData, categoriesData] = await Promise.all([
+          getAllAvailableOils(), // Gets system oils + public custom oils
+          getOilCategories(),
+        ]);
+        
+        setOils(oilsData);
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error('Failed to fetch oils:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load oils');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchData();
+  }, []);
 
   // Filter oils based on search and category
   const filteredOils = useMemo(() => {
-    return OILS_DATABASE.filter((oil) => {
+    return oils.filter((oil) => {
       const matchesSearch = oil.name
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
@@ -40,7 +70,7 @@ export function OilSelector() {
         categoryFilter === "all" || oil.category === categoryFilter;
       return matchesSearch && matchesCategory;
     });
-  }, [searchQuery, categoryFilter]);
+  }, [oils, searchQuery, categoryFilter]);
 
   // Get recommended oil IDs for easy lookup
   const recommendedOilIds = useMemo(() => {
@@ -112,7 +142,7 @@ export function OilSelector() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {OIL_CATEGORIES.map((category) => (
+              {categories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>
@@ -153,7 +183,26 @@ export function OilSelector() {
 
         {/* All Oils Grid */}
         <div>
-          {filteredOils.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+                <span className="sr-only">Loading oils...</span>
+              </div>
+              <p className="mt-4 text-gray-500">Loading oils from database...</p>
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+              <p className="text-red-700 font-medium">Failed to load oils</p>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Reload Page
+              </button>
+            </div>
+          ) : filteredOils.length === 0 ? (
             <p className="text-center text-gray-500 py-8">
               No oils found matching your search.
             </p>

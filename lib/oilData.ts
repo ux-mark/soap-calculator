@@ -1,8 +1,27 @@
 import { OilData } from "./types";
 
+// =====================================================
+// DEPRECATED: This file is kept for backwards compatibility
+// =====================================================
+// 
+// NEW APPROACH: Oils are now stored in the Supabase database (oils table)
+// Use lib/services/oils.ts to fetch oils from the database instead
+//
+// This static data file is maintained as a fallback but should not be
+// used in new code. The database contains 149+ oils with the same structure.
+//
+// Migration path:
+// - Old: import { OILS_DATABASE } from '@/lib/oilData'
+// - New: import { getAllAvailableOils } from '@/lib/services/oils'
+//
+// =====================================================
+
 // Comprehensive oil database with fatty acid profiles and saponification values
 // Data sourced from SoapCalc (soapcalc.net) - used under fair use for educational purposes
 
+/**
+ * @deprecated Use getAllAvailableOils() from lib/services/oils.ts instead
+ */
 export const OILS_DATABASE: OilData[] = [
   {
     id: "coconut-oil-76",
@@ -386,12 +405,20 @@ export const OILS_DATABASE: OilData[] = [
   },
 ];
 
-// Helper function to get oil by ID
+// =====================================================
+// Helper functions
+// =====================================================
+
+/**
+ * @deprecated Use getOilById() from lib/services/oils.ts instead
+ */
 export function getOilById(id: string): OilData | undefined {
   return OILS_DATABASE.find((oil) => oil.id === id);
 }
 
-// Helper function to search oils by name
+/**
+ * @deprecated Use searchOils() from lib/services/oils.ts instead
+ */
 export function searchOils(query: string): OilData[] {
   const lowerQuery = query.toLowerCase();
   return OILS_DATABASE.filter((oil) =>
@@ -399,9 +426,14 @@ export function searchOils(query: string): OilData[] {
   );
 }
 
-// Helper function to get oils by category
+/**
+ * @deprecated Use getOilsByCategory() from lib/services/oils.ts instead
+ */
 export function getOilsByCategory(category: string): OilData[] {
   return OILS_DATABASE.filter((oil) => oil.category === category);
 }
 
+/**
+ * @deprecated Use getOilCategories() from lib/services/oils.ts instead
+ */
 export const OIL_CATEGORIES = ["Hard Oil", "Soft Oil", "Liquid Oil", "Butter"];
