@@ -23,10 +23,14 @@ Vercel is the easiest way to deploy Next.js applications and is created by the s
    - Vercel will auto-detect Next.js settings
    - Click "Deploy"
 
-3. **Configure Environment Variables** (if adding Supabase later)
+3. **Configure Environment Variables**
    - In Vercel dashboard, go to Project Settings → Environment Variables
-   - Add any necessary environment variables
-   - Redeploy if needed
+   - Add the following required variables:
+     - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+   - Select environments: Production, Preview, Development
+   - Click Save
+   - Redeploy for changes to take effect
 
 ### Custom Domain
 
@@ -85,18 +89,46 @@ Vercel is the easiest way to deploy Next.js applications and is created by the s
 
 ## Environment Variables
 
-If you add Supabase or other services, create a `.env.local` file:
+### Local Development
+
+Your `.env.local` file already contains:
 
 ```env
-# Supabase (when implemented)
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://tztutumdgxbpqwavkxxm.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
-# Optional: Analytics
-NEXT_PUBLIC_GA_ID=your-google-analytics-id
+# Optional: Analytics (add if needed)
+# NEXT_PUBLIC_GA_ID=your-google-analytics-id
 ```
 
-**Important**: Never commit `.env.local` to version control!
+**Important**: Never commit `.env.local` to version control! ✅ Already in `.gitignore`
+
+### Production (Vercel)
+
+Add these environment variables in Vercel Dashboard → Settings → Environment Variables:
+
+| Variable | Value | Notes |
+|----------|-------|-------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Safe to expose (public) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key | Safe to expose (protected by RLS) |
+
+**Steps:**
+1. Go to [vercel.com](https://vercel.com) → Your Project → Settings
+2. Click **Environment Variables**
+3. Add each variable
+4. Select all environments: Production, Preview, Development
+5. Click **Save**
+6. **Redeploy** your application
+
+### Finding Your Supabase Credentials
+
+1. Go to [app.supabase.com](https://app.supabase.com)
+2. Select your project
+3. Go to **Settings** → **API**
+4. Copy:
+   - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
+   - **anon/public key** → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ## Build Optimization
 

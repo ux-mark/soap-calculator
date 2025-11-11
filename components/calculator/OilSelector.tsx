@@ -16,7 +16,7 @@ import { getAllAvailableOils, getOilCategories } from "@/lib/services/oils";
 import type { OilData } from "@/lib/types";
 import { useCalculator } from "@/contexts/CalculatorContext";
 import { OilTile } from "./OilTile";
-import { getSuggestedPercentageForOil } from "@/lib/recommendations";
+import { getSuggestedPercentageForOil, getOilRecommendationDetail } from "@/lib/recommendations";
 
 export function OilSelector() {
   const {
@@ -26,6 +26,7 @@ export function OilSelector() {
     incompatibleOilIds,
     totalPercentage,
     results,
+    inputs,
   } = useCalculator();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,18 +61,6 @@ export function OilSelector() {
     fetchData();
   }, []);
 
-  // Filter oils based on search and category
-  const filteredOils = useMemo(() => {
-    return oils.filter((oil) => {
-      const matchesSearch = oil.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const matchesCategory =
-        categoryFilter === "all" || oil.category === categoryFilter;
-      return matchesSearch && matchesCategory;
-    });
-  }, [oils, searchQuery, categoryFilter]);
-
   // Get recommended oil IDs for easy lookup
   const recommendedOilIds = useMemo(() => {
     return new Set(recommendations.map((rec) => rec.oil.id));
@@ -81,6 +70,22 @@ export function OilSelector() {
   const selectedOilIds = useMemo(() => {
     return new Set(selectedOils.map((oil) => oil.id));
   }, [selectedOils]);
+
+  // Filter oils based on search and category
+  const filteredOils = useMemo(() => {
+    return oils.filter((oil) => {
+      const matchesSearch = oil.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        categoryFilter === "all" || oil.category === categoryFilter;
+      
+      // Exclude oils that are already in the recommendations section to avoid duplication
+      const isInRecommendations = recommendedOilIds.has(oil.id);
+      
+      return matchesSearch && matchesCategory && !isInRecommendations;
+    });
+  }, [oils, searchQuery, categoryFilter, recommendedOilIds]);
 
   // Determine if we're in dynamic mode (< 50% selected)
   const isDynamicMode = totalPercentage < 50;
@@ -173,6 +178,7 @@ export function OilSelector() {
                   suggestedPercentage={rec.suggestedPercentage}
                   predictedImpact={rec.predictedImpact}
                   recommendationScore={rec.score}
+                  recommendationDetail={rec.detail}
                   onSelect={() => addOil({ ...rec.oil, percentage: 0 })}
                   onQuickAdd={(percentage: number) => addOil({ ...rec.oil, percentage })}
                 />
@@ -212,6 +218,44 @@ export function OilSelector() {
                 const isSelected = selectedOilIds.has(oil.id);
                 const suggestedPercentage = isSelected ? getSuggestedPercentage(oil.id) : undefined;
                 
+                // Generate recommendation detail for this oil
+                let recommendationDetail;
+                if (results || selectedOils.length === 0) {
+                  // Create context for recommendation
+                  const context = results ? {
+                    currentOils: selectedOils,
+                    currentPercentage: totalPercentage,
+                    currentQualities: results.qualities,
+                    currentFattyAcids: results.fattyAcids,
+                  } : {
+                    currentOils: [],
+                    currentPercentage: 0,
+                    currentQualities: {
+                      hardness: 0,
+                      cleansing: 0,
+                      conditioning: 0,
+                      bubbly: 0,
+                      creamy: 0,
+                      iodine: 0,
+                      ins: 0,
+                    },
+                    currentFattyAcids: {
+                      lauric: 0,
+                      myristic: 0,
+                      palmitic: 0,
+                      stearic: 0,
+                      ricinoleic: 0,
+                      oleic: 0,
+                      linoleic: 0,
+                      linolenic: 0,
+                    },
+                  };
+                  
+                  // Use the actual soap type from recipe inputs
+                  const soapType = inputs.soapType === "liquid" ? "liquid" : "hard";
+                  recommendationDetail = getOilRecommendationDetail(oil, context, soapType);
+                }
+                
                 return (
                   <OilTile
                     key={oil.id}
@@ -222,6 +266,7 @@ export function OilSelector() {
                       isDynamicMode && incompatibleOilIds.has(oil.id)
                     }
                     suggestedPercentage={suggestedPercentage}
+                    recommendationDetail={recommendationDetail}
                     onSelect={() => addOil({ ...oil, percentage: 0 })}
                   />
                 );

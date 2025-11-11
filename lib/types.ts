@@ -89,6 +89,71 @@ export interface SavedRecipe {
 }
 
 // Recommendation system
+export interface FattyAcidContribution {
+  acid: string;
+  percentage: number;
+  whyHelpful: string;
+}
+
+export interface QualityProjection {
+  quality: string;
+  current: number;
+  projected: number;
+  range: { min: number; max: number };
+  movesTowardIdeal: boolean;
+}
+
+export interface IncompatibilityProblem {
+  type: "wrong_soap_type" | "too_similar" | "pushes_out_of_range" | "dos_risk";
+  details: string;
+  numericIssue: string;
+  visualResult: string;
+}
+
+export interface BetterAlternative {
+  oilId: string;
+  whyBetter: string;
+  specificAdvantage: string;
+}
+
+export interface ComparativeAnalysis {
+  similarTo?: string; // oil ID
+  overlapPercentage?: number;
+  advantageOver?: {
+    oilId: string;
+    metric: string;
+    improvement: number;
+  };
+}
+
+export interface RecommendationDetail {
+  score: number;
+  scoreCategory: "highly_recommended" | "good_match" | "neutral" | "caution" | "incompatible";
+  cardColor: "green" | "blue" | "yellow" | "orange" | "red";
+  
+  // Specific chemistry
+  fattyAcidContributions: FattyAcidContribution[];
+  
+  // Numeric projections
+  qualityProjections: QualityProjection[];
+  
+  // Comparisons
+  comparativeAnalysis: ComparativeAnalysis;
+  
+  // Specific incompatibilities
+  problems?: IncompatibilityProblem[];
+  
+  // Concrete alternatives
+  betterAlternatives?: BetterAlternative[];
+  
+  // Generated sentence
+  displayCopy: string;
+  
+  // Additional metadata
+  suggestedPercentage: number;
+  usageTip?: string;
+}
+
 export interface OilRecommendation {
   oil: OilData;
   score: number;
@@ -100,6 +165,8 @@ export interface OilRecommendation {
     improvesQuality: string[];
     fillsNeeds: string[];
   };
+  // Enhanced details
+  detail?: RecommendationDetail;
 }
 
 export interface RecommendationContext {
