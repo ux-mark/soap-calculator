@@ -15,6 +15,7 @@ A modern, data-driven web application for creating optimal cold process soap rec
 - **Compatibility Scoring**: Each oil rated for how well it complements your recipe
 - **Dynamic Filtering**: Incompatible oils automatically disabled when selection < 50%
 - **Context-Aware Tips**: Specific reasons why each oil is recommended
+- **Expandable Details**: Click recommendation badge to show/hide detailed information
 
 ### ⚙️ Advanced Features
 - **Multiple Unit Support**: Grams, ounces, and pounds
@@ -31,6 +32,7 @@ A modern, data-driven web application for creating optimal cold process soap rec
 - **Visual Quality Indicators**: Color-coded progress bars with ideal ranges
 - **Auto-Distribution**: One-click equal distribution of oil percentages
 - **Search & Filter**: Quick oil finding by name or category
+- **Simplified Oil Cards**: Clean, compact view with expandable details on demand
 
 ## Tech Stack
 

@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, Lock, TrendingUp, AlertTriangle, Info } from "lucide-react";
+import { Check, Sparkles, Lock, TrendingUp, AlertTriangle, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { OilData, RecommendationDetail } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +36,9 @@ export function OilTile({
   onSelect,
   onQuickAdd,
 }: OilTileProps) {
+  // State to control expand/collapse
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   // Use detail if available, otherwise fall back to basic props
   const detail = recommendationDetail;
   const scoreCategory = detail?.scoreCategory;
@@ -81,35 +84,35 @@ export function OilTile({
     switch (scoreCategory) {
       case "highly_recommended":
         return (
-          <Badge className="bg-green-600 text-white text-xs">
+          <Badge className="bg-green-600 hover:bg-green-500 text-white text-xs pointer-events-none border-2 border-green-600 hover:border-green-600">
             <Sparkles className="h-3 w-3 mr-1" />
             Highly Recommended
           </Badge>
         );
       case "good_match":
         return (
-          <Badge className="bg-blue-600 text-white text-xs">
+          <Badge className="bg-blue-600 hover:bg-blue-500 text-white text-xs pointer-events-none border-2 border-blue-600 hover:border-blue-600">
             <Info className="h-3 w-3 mr-1" />
             Good Match
           </Badge>
         );
       case "neutral":
         return (
-          <Badge className="bg-yellow-600 text-white text-xs">
+          <Badge className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs pointer-events-none border-2 border-yellow-600 hover:border-yellow-600">
             <Info className="h-3 w-3 mr-1" />
             Use With Caution
           </Badge>
         );
       case "caution":
         return (
-          <Badge className="bg-orange-600 text-white text-xs">
+          <Badge className="bg-orange-600 hover:bg-orange-500 text-white text-xs pointer-events-none border-2 border-orange-600 hover:border-orange-600">
             <AlertTriangle className="h-3 w-3 mr-1" />
             Limited Compatibility
           </Badge>
         );
       case "incompatible":
         return (
-          <Badge className="bg-red-600 text-white text-xs">
+          <Badge className="bg-red-600 hover:bg-red-500 text-white text-xs pointer-events-none border-2 border-red-600 hover:border-red-600">
             <AlertTriangle className="h-3 w-3 mr-1" />
             Incompatible
           </Badge>
@@ -122,27 +125,15 @@ export function OilTile({
   return (
     <Card
       className={cn(
-        "cursor-pointer transition-all duration-200 hover:shadow-md relative overflow-hidden",
+        "transition-all duration-200 hover:shadow-md relative overflow-hidden",
         getCardClassName()
       )}
-      onClick={() => {
-        if (!isDisabled && !isSelected) {
-          onSelect();
-        }
-      }}
       title={isDisabled ? disabledReason : undefined}
     >
       {/* Selected Indicator */}
       {isSelected && (
         <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1 z-10">
           <Check className="h-3 w-3" />
-        </div>
-      )}
-
-      {/* Recommendation Badge */}
-      {!isSelected && getBadge() && (
-        <div className="absolute top-2 left-2 right-2 z-10">
-          {getBadge()}
         </div>
       )}
 
@@ -154,10 +145,18 @@ export function OilTile({
         </div>
       )}
 
-      <div className={cn(
-        "p-4 space-y-2",
-        (scoreCategory && !isSelected) && "pt-8"
-      )}>
+      {/* Main clickable area to select oil */}
+      <div 
+        className={cn(
+          "p-4 space-y-2 cursor-pointer",
+          (scoreCategory && !isSelected) && "pt-8"
+        )}
+        onClick={() => {
+          if (!isDisabled && !isSelected) {
+            onSelect();
+          }
+        }}
+      >
         {/* Oil Name with Suggested Percentage for Selected Oils */}
         <div className="flex items-start justify-between gap-2">
           <h4 className="font-semibold text-sm leading-tight">{oil.name}</h4>
@@ -179,125 +178,152 @@ export function OilTile({
           </Badge>
         )}
 
-        {/* Key Properties */}
-        <div className="grid grid-cols-2 gap-1 text-xs text-gray-600">
-          <div>
-            <span className="font-medium">SAP:</span> {oil.sap_naoh.toFixed(3)}
-          </div>
-          <div>
-            <span className="font-medium">INS:</span> {oil.ins}
-          </div>
-        </div>
-
-        {/* Top Fatty Acids */}
-        <div className="text-xs text-gray-500">
-          {getTopFattyAcids(oil).map((fa, idx) => (
-            <span key={fa.name}>
-              {fa.name} {fa.value}%
-              {idx < 2 ? ", " : ""}
-            </span>
-          ))}
-        </div>
-
-        {/* Enhanced Display Copy */}
-        {displayCopy && !isDisabled && (
-          <div className={cn(
-            "text-xs font-medium p-2 rounded",
-            cardColor === "green" && "text-green-800 bg-green-100",
-            cardColor === "blue" && "text-blue-800 bg-blue-100",
-            cardColor === "yellow" && "text-yellow-800 bg-yellow-100",
-            cardColor === "orange" && "text-orange-800 bg-orange-100",
-            cardColor === "red" && "text-red-800 bg-red-100",
-            !cardColor && "text-gray-700 bg-gray-100"
-          )}>
-            {displayCopy}
-          </div>
-        )}
-
-        {/* Quality Projections Summary */}
-        {detail && detail.qualityProjections.length > 0 && !isDisabled && (
-          <div className="space-y-1">
-            {detail.qualityProjections.slice(0, 2).map((projection) => (
-              <div key={projection.quality} className="flex items-center justify-between text-xs">
-                <span className="text-gray-600 capitalize">{projection.quality}:</span>
-                <span className={cn(
-                  "font-medium",
-                  projection.movesTowardIdeal ? "text-green-600" : "text-amber-600"
-                )}>
-                  {projection.current} → {projection.projected}
-                  {projection.movesTowardIdeal && " ✓"}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Fatty Acid Contributions */}
-        {detail && detail.fattyAcidContributions.length > 0 && !isDisabled && (
-          <div className="text-xs text-gray-600 italic">
-            {detail.fattyAcidContributions[0].acid}: {detail.fattyAcidContributions[0].percentage.toFixed(0)}%
-          </div>
-        )}
-
-        {/* Usage Tip */}
-        {detail?.usageTip && !isDisabled && (
-          <div className="flex items-start gap-1 text-xs text-blue-700 bg-blue-50 p-2 rounded">
-            <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
-            <span>{detail.usageTip}</span>
-          </div>
-        )}
-
-        {/* Suggested Percentage and Quick Add */}
-        {suggestedPercentage && !isSelected && !isDisabled && onQuickAdd && scoreCategory !== "incompatible" && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onQuickAdd(suggestedPercentage);
-            }}
-            className={cn(
-              "w-full mt-2 px-3 py-1.5 text-xs font-medium rounded transition-colors",
-              cardColor === "green" && "bg-green-600 hover:bg-green-700 text-white",
-              cardColor === "blue" && "bg-blue-600 hover:bg-blue-700 text-white",
-              cardColor === "yellow" && "bg-yellow-600 hover:bg-yellow-700 text-white",
-              cardColor === "orange" && "bg-orange-600 hover:bg-orange-700 text-white",
-              !cardColor && "bg-primary hover:bg-primary/90 text-white"
-            )}
-          >
-            Add {suggestedPercentage}%
-          </button>
-        )}
-
-        {/* Disabled Reason */}
-        {isDisabled && disabledReason && (
-          <p className="text-xs text-red-600 italic">
-            {disabledReason}
-          </p>
-        )}
-
-        {/* Problems/Incompatibilities */}
-        {detail?.problems && detail.problems.length > 0 && (
-          <div className="space-y-1">
-            {detail.problems.slice(0, 1).map((problem, idx) => (
-              <div key={idx} className="text-xs text-red-700 bg-red-50 p-2 rounded">
-                <div className="font-semibold">{problem.details}</div>
-                <div className="mt-1 text-red-600">{problem.visualResult}</div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Better Alternatives */}
-        {detail?.betterAlternatives && detail.betterAlternatives.length > 0 && (
-          <div className="text-xs text-blue-700 bg-blue-50 p-2 rounded">
-            <div className="font-semibold">Try instead:</div>
-            {detail.betterAlternatives.slice(0, 1).map((alt, idx) => (
-              <div key={idx} className="mt-1">
-                {alt.oilId.replace(/-/g, ' ')} - {alt.whyBetter}
-              </div>
-            ))}
+        {/* Recommendation Badge - Now with expand button */}
+        {!isSelected && getBadge() && (
+          <div className="group cursor-pointer">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className="w-full flex items-center justify-between gap-2 text-left"
+            >
+              <span className="[&>*]:group-hover:brightness-95 [&>*]:transition-all">
+                {getBadge()}
+              </span>
+              {isExpanded ? (
+                <ChevronUp className="h-4 w-4 flex-shrink-0 group-hover:opacity-70 transition-opacity" />
+              ) : (
+                <ChevronDown className="h-4 w-4 flex-shrink-0 group-hover:opacity-70 transition-opacity" />
+              )}
+            </button>
           </div>
         )}
       </div>
+
+      {/* Expandable Details Section */}
+      {isExpanded && !isSelected && (
+        <div className="px-4 pb-4 space-y-2 border-t pt-3">
+          {/* Key Properties */}
+          <div className="grid grid-cols-2 gap-1 text-xs text-gray-600">
+            <div>
+              <span className="font-medium">SAP:</span> {oil.sap_naoh.toFixed(3)}
+            </div>
+            <div>
+              <span className="font-medium">INS:</span> {oil.ins}
+            </div>
+          </div>
+
+          {/* Top Fatty Acids */}
+          <div className="text-xs text-gray-500">
+            {getTopFattyAcids(oil).map((fa, idx) => (
+              <span key={fa.name}>
+                {fa.name} {fa.value}%
+                {idx < 2 ? ", " : ""}
+              </span>
+            ))}
+          </div>
+
+          {/* Enhanced Display Copy */}
+          {displayCopy && !isDisabled && (
+            <div className={cn(
+              "text-xs font-medium p-2 rounded",
+              cardColor === "green" && "text-green-800 bg-green-100",
+              cardColor === "blue" && "text-blue-800 bg-blue-100",
+              cardColor === "yellow" && "text-yellow-800 bg-yellow-100",
+              cardColor === "orange" && "text-orange-800 bg-orange-100",
+              cardColor === "red" && "text-red-800 bg-red-100",
+              !cardColor && "text-gray-700 bg-gray-100"
+            )}>
+              {displayCopy}
+            </div>
+          )}
+
+          {/* Quality Projections Summary */}
+          {detail && detail.qualityProjections.length > 0 && !isDisabled && (
+            <div className="space-y-1">
+              {detail.qualityProjections.slice(0, 2).map((projection) => (
+                <div key={projection.quality} className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600 capitalize">{projection.quality}:</span>
+                  <span className={cn(
+                    "font-medium",
+                    projection.movesTowardIdeal ? "text-green-600" : "text-amber-600"
+                  )}>
+                    {projection.current} → {projection.projected}
+                    {projection.movesTowardIdeal && " ✓"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Fatty Acid Contributions */}
+          {detail && detail.fattyAcidContributions.length > 0 && !isDisabled && (
+            <div className="text-xs text-gray-600 italic">
+              {detail.fattyAcidContributions[0].acid}: {detail.fattyAcidContributions[0].percentage.toFixed(0)}%
+            </div>
+          )}
+
+          {/* Usage Tip */}
+          {detail?.usageTip && !isDisabled && (
+            <div className="flex items-start gap-1 text-xs text-blue-700 bg-blue-50 p-2 rounded">
+              <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
+              <span>{detail.usageTip}</span>
+            </div>
+          )}
+
+          {/* Suggested Percentage and Quick Add */}
+          {suggestedPercentage && !isDisabled && onQuickAdd && scoreCategory !== "incompatible" && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickAdd(suggestedPercentage);
+              }}
+              className={cn(
+                "w-full mt-2 px-3 py-1.5 text-xs font-medium rounded transition-colors",
+                cardColor === "green" && "bg-green-600 hover:bg-green-700 text-white",
+                cardColor === "blue" && "bg-blue-600 hover:bg-blue-700 text-white",
+                cardColor === "yellow" && "bg-yellow-600 hover:bg-yellow-700 text-white",
+                cardColor === "orange" && "bg-orange-600 hover:bg-orange-700 text-white",
+                !cardColor && "bg-primary hover:bg-primary/90 text-white"
+              )}
+            >
+              Add {suggestedPercentage}%
+            </button>
+          )}
+
+          {/* Disabled Reason */}
+          {isDisabled && disabledReason && (
+            <p className="text-xs text-red-600 italic">
+              {disabledReason}
+            </p>
+          )}
+
+          {/* Problems/Incompatibilities */}
+          {detail?.problems && detail.problems.length > 0 && (
+            <div className="space-y-1">
+              {detail.problems.slice(0, 1).map((problem, idx) => (
+                <div key={idx} className="text-xs text-red-700 bg-red-50 p-2 rounded">
+                  <div className="font-semibold">{problem.details}</div>
+                  <div className="mt-1 text-red-600">{problem.visualResult}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Better Alternatives */}
+          {detail?.betterAlternatives && detail.betterAlternatives.length > 0 && (
+            <div className="text-xs text-blue-700 bg-blue-50 p-2 rounded">
+              <div className="font-semibold">Try instead:</div>
+              {detail.betterAlternatives.slice(0, 1).map((alt, idx) => (
+                <div key={idx} className="mt-1">
+                  {alt.oilId.replace(/-/g, ' ')} - {alt.whyBetter}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   );
 }
