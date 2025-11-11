@@ -350,3 +350,41 @@ export function getQualityPercentage(
   const percentage = ((value - range.min) / (range.max - range.min)) * 100;
   return Math.max(0, Math.min(100, percentage));
 }
+
+/**
+ * Calculate individual oil's contribution to soap qualities
+ * Shows how a single oil contributes to the overall formula
+ */
+export function calculateIndividualOilContribution(
+  oil: SelectedOil,
+  totalPercentage: number = 100
+): {
+  qualities: SoapQualities;
+  fattyAcids: FattyAcidProfile;
+} {
+  // Create a "virtual" oil that represents this oil's weighted contribution
+  // Scale the oil's properties by its percentage in the formula
+  const weight = oil.percentage / totalPercentage;
+  
+  const scaledFattyAcids: FattyAcidProfile = {
+    lauric: oil.fatty_acids.lauric * weight,
+    myristic: oil.fatty_acids.myristic * weight,
+    palmitic: oil.fatty_acids.palmitic * weight,
+    stearic: oil.fatty_acids.stearic * weight,
+    ricinoleic: oil.fatty_acids.ricinoleic * weight,
+    oleic: oil.fatty_acids.oleic * weight,
+    linoleic: oil.fatty_acids.linoleic * weight,
+    linolenic: oil.fatty_acids.linolenic * weight,
+  };
+
+  // Calculate qualities from the scaled fatty acids
+  const qualities = calculateSoapQualities(scaledFattyAcids, [
+    { ...oil, percentage: oil.percentage * weight }
+  ]);
+
+  return {
+    qualities,
+    fattyAcids: scaledFattyAcids,
+  };
+}
+

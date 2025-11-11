@@ -9,6 +9,7 @@ import {
   getQualityRanges,
   getQualityStatus,
   getQualityPercentage,
+  calculateIndividualOilContribution,
 } from "@/lib/calculations";
 import { cn } from "@/lib/utils";
 import { useCalculator } from "@/contexts/CalculatorContext";
@@ -19,9 +20,25 @@ interface QualityDisplayProps {
 }
 
 export function QualityDisplay({ qualities, fattyAcids }: QualityDisplayProps) {
-  const { inputs } = useCalculator();
+  const { inputs, selectedOils, inspectedOilIds, totalPercentage } = useCalculator();
   const soapType = inputs.soapType;
   const qualityRanges = getQualityRanges(soapType);
+  
+  // Get all inspected oils and their contributions
+  const inspectedOils = selectedOils.filter(oil => inspectedOilIds.includes(oil.id));
+  const inspectedContributions = inspectedOils.map(oil => ({
+    oil,
+    contribution: calculateIndividualOilContribution(oil, totalPercentage)
+  }));
+  
+  // Define distinct colors for up to 5 oils
+  const oilColors = [
+    { bg: "bg-blue-400", text: "text-blue-700" },
+    { bg: "bg-green-400", text: "text-green-700" },
+    { bg: "bg-purple-400", text: "text-purple-700" },
+    { bg: "bg-orange-400", text: "text-orange-700" },
+    { bg: "bg-pink-400", text: "text-pink-700" },
+  ];
   const qualityItems: Array<{
     key: keyof SoapQualities;
     label: string;
@@ -98,40 +115,78 @@ export function QualityDisplay({ qualities, fattyAcids }: QualityDisplayProps) {
                     {soapType === "hard" ? item.hardDescription : item.liquidDescription}
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className={cn("font-bold text-sm", getStatusColor(status))}>
-                    {value}
-                  </span>
-                  <p className="text-xs text-gray-500">
-                    {range.min}-{range.max}
-                  </p>
-                </div>
+                <p className="text-xs text-gray-500">
+                  {range.min}-{range.max}
+                </p>
               </div>
 
-              {/* Progress Bar */}
-              <div className="relative">
-                <Progress value={percentage} className="h-3" />
-                <div
-                  className={cn(
-                    "absolute top-0 left-0 h-3 rounded-full transition-all",
-                    status === "ideal" && "bg-success",
-                    status === "in-range" && "bg-secondary",
-                    status === "below" && "bg-warning",
-                    status === "above" && "bg-danger"
-                  )}
-                  style={{ width: `${Math.min(100, percentage)}%` }}
-                />
+              {/* Individual Oil Contribution Bars - shown when comparing oils */}
+              {inspectedContributions.length > 0 && (
+                <div className="space-y-2">
+                  {inspectedContributions.map(({ oil, contribution }, index) => {
+                    const individualValue = contribution.qualities[item.key];
+                    const individualPercentage = getQualityPercentage(item.key, individualValue, soapType);
+                    const colors = oilColors[index % oilColors.length];
 
-                {/* Ideal Range Indicator */}
-                {range.ideal && (
+                    return (
+                      <div key={oil.id} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <p className={`text-xs font-medium ${colors.text}`}>
+                            {oil.name} Contribution
+                          </p>
+                          <span className={`text-lg font-bold ${colors.text}`}>
+                            {individualValue}
+                          </span>
+                        </div>
+                        <div className="relative h-2">
+                          <Progress value={individualPercentage} className="h-2 opacity-50" />
+                          <div
+                            className={`absolute top-0 left-0 h-2 rounded-full ${colors.bg} opacity-70 transition-all`}
+                            style={{ width: `${Math.min(100, individualPercentage)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Total Formula Bar */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  {inspectedContributions.length > 0 && (
+                    <p className="text-xs font-medium text-gray-700">
+                      Total Formula
+                    </p>
+                  )}
+                  <span className={cn("text-lg font-bold", getStatusColor(status))}>
+                    {value}
+                  </span>
+                </div>
+                <div className="relative">
+                  <Progress value={percentage} className="h-3" />
                   <div
-                    className="absolute top-0 h-3 border-2 border-success/30 bg-success/10 rounded"
-                    style={{
-                      left: `${((range.ideal.min - range.min) / (range.max - range.min)) * 100}%`,
-                      width: `${((range.ideal.max - range.ideal.min) / (range.max - range.min)) * 100}%`,
-                    }}
+                    className={cn(
+                      "absolute top-0 left-0 h-3 rounded-full transition-all",
+                      status === "ideal" && "bg-success",
+                      status === "in-range" && "bg-secondary",
+                      status === "below" && "bg-warning",
+                      status === "above" && "bg-danger"
+                    )}
+                    style={{ width: `${Math.min(100, percentage)}%` }}
                   />
-                )}
+
+                  {/* Ideal Range Indicator */}
+                  {range.ideal && (
+                    <div
+                      className="absolute top-0 h-3 border-2 border-success/30 bg-success/10 rounded"
+                      style={{
+                        left: `${((range.ideal.min - range.min) / (range.max - range.min)) * 100}%`,
+                        width: `${((range.ideal.max - range.ideal.min) / (range.max - range.min)) * 100}%`,
+                      }}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Status Badge */}
@@ -154,6 +209,23 @@ export function QualityDisplay({ qualities, fattyAcids }: QualityDisplayProps) {
 }
 
 export function FattyAcidDisplay({ fattyAcids }: { fattyAcids: FattyAcidProfile }) {
+  const { selectedOils, inspectedOilIds, totalPercentage } = useCalculator();
+  
+  // Get all inspected oils and their contributions
+  const inspectedOils = selectedOils.filter(oil => inspectedOilIds.includes(oil.id));
+  const inspectedContributions = inspectedOils.map(oil => ({
+    oil,
+    contribution: calculateIndividualOilContribution(oil, totalPercentage)
+  }));
+  
+  // Define distinct colors for up to 5 oils (matching QualityDisplay)
+  const oilColors = [
+    { bg: "bg-blue-400", text: "text-blue-700" },
+    { bg: "bg-green-400", text: "text-green-700" },
+    { bg: "bg-purple-400", text: "text-purple-700" },
+    { bg: "bg-orange-400", text: "text-orange-700" },
+    { bg: "bg-pink-400", text: "text-pink-700" },
+  ];
   const acidItems: Array<{
     key: keyof FattyAcidProfile;
     label: string;
@@ -210,7 +282,7 @@ export function FattyAcidDisplay({ fattyAcids }: { fattyAcids: FattyAcidProfile 
         {acidItems.map((item) => {
           const value = Math.round(fattyAcids[item.key]);
           
-          if (value === 0) return null; // Don't show acids with 0%
+          if (value === 0 && inspectedContributions.length === 0) return null; // Don't show acids with 0% unless comparing
 
           return (
             <div key={item.key} className="space-y-2">
@@ -222,8 +294,42 @@ export function FattyAcidDisplay({ fattyAcids }: { fattyAcids: FattyAcidProfile 
                 <span className="font-bold text-sm text-gray-700">{value}%</span>
               </div>
 
-              {/* Simple Progress Bar */}
-              <Progress value={value} className="h-2" />
+              {/* Individual Oil Contribution Bars - shown when comparing oils */}
+              {inspectedContributions.length > 0 && (
+                <div className="space-y-2">
+                  {inspectedContributions.map(({ oil, contribution }, index) => {
+                    const individualValue = Math.round(contribution.fattyAcids[item.key]);
+                    const colors = oilColors[index % oilColors.length];
+
+                    return (
+                      <div key={oil.id} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <p className={`text-xs font-medium ${colors.text}`}>
+                            {oil.name}: {individualValue}%
+                          </p>
+                        </div>
+                        <div className="relative h-2">
+                          <Progress value={individualValue} className="h-2 opacity-50" />
+                          <div
+                            className={`absolute top-0 left-0 h-2 rounded-full ${colors.bg} opacity-70 transition-all`}
+                            style={{ width: `${Math.min(100, individualValue)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Total Formula Bar */}
+              <div className="space-y-1">
+                {inspectedContributions.length > 0 && (
+                  <p className="text-xs font-medium text-gray-700">
+                    Total: {value}%
+                  </p>
+                )}
+                <Progress value={value} className="h-2" />
+              </div>
             </div>
           );
         })}

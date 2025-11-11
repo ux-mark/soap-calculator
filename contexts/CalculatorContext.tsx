@@ -26,6 +26,7 @@ interface CalculatorContextValue {
   results: CalculationResults | null;
   recommendations: OilRecommendation[];
   incompatibleOilIds: Set<string>;
+  inspectedOilIds: string[]; // Changed from single ID to array for multi-select
 
   // Actions
   addOil: (oil: SelectedOil) => void;
@@ -34,6 +35,7 @@ interface CalculatorContextValue {
   updateInputs: (newInputs: Partial<RecipeInputs>) => void;
   recalculate: () => void;
   resetCalculator: () => void;
+  toggleOilInspection: (oilId: string) => void; // Renamed for clarity
   
   // Validation
   isValid: boolean;
@@ -69,6 +71,7 @@ export function CalculatorProvider({
   const [incompatibleOilIds, setIncompatibleOilIds] = useState<Set<string>>(
     new Set()
   );
+  const [inspectedOilIds, setInspectedOilIds] = useState<string[]>([]); // Changed to array
 
   // Validation
   const validation = validateOilPercentages(selectedOils);
@@ -90,6 +93,8 @@ export function CalculatorProvider({
   // Remove an oil from the selection
   const removeOil = useCallback((oilId: string) => {
     setSelectedOils((prev) => prev.filter((oil) => oil.id !== oilId));
+    // Remove from inspection if the removed oil was being inspected
+    setInspectedOilIds((prev) => prev.filter((id) => id !== oilId));
   }, []);
 
   // Update oil percentage
@@ -107,6 +112,18 @@ export function CalculatorProvider({
   // Update inputs
   const updateInputs = useCallback((newInputs: Partial<RecipeInputs>) => {
     setInputs((prev) => ({ ...prev, ...newInputs }));
+  }, []);
+
+  // Toggle oil inspection (multi-select)
+  const toggleOilInspection = useCallback((oilId: string) => {
+    setInspectedOilIds((prev) => {
+      // If oil is already inspected, remove it
+      if (prev.includes(oilId)) {
+        return prev.filter((id) => id !== oilId);
+      }
+      // Otherwise, add it to the inspected list
+      return [...prev, oilId];
+    });
   }, []);
 
   // Recalculate results and recommendations
@@ -163,6 +180,7 @@ export function CalculatorProvider({
     setResults(null);
     setRecommendations([]);
     setIncompatibleOilIds(new Set());
+    setInspectedOilIds([]); // Clear all inspections
   }, []);
 
   // Auto-recalculate when oils or inputs change
@@ -176,12 +194,14 @@ export function CalculatorProvider({
     results,
     recommendations,
     incompatibleOilIds,
+    inspectedOilIds,
     addOil,
     removeOil,
     updateOilPercentage,
     updateInputs,
     recalculate,
     resetCalculator,
+    toggleOilInspection,
     isValid: validation.isValid,
     totalPercentage: validation.totalPercentage,
   };

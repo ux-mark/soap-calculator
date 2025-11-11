@@ -32,12 +32,7 @@ The application is fully functional and ready for deployment. All core features 
 - ✅ Fragrance weight support
 
 ### 4. **Oil Database**
-- ✅ 20 oils with complete data:
-  - Coconut Oil, Palm Oil, Olive Oil, Castor Oil
-  - Sweet Almond, Shea Butter, Cocoa Butter, Sunflower
-  - Avocado, Jojoba, Rice Bran, Hemp Seed
-  - Mango Butter, Kukui Nut, Babassu, Grapeseed
-  - Hazelnut, Apricot Kernel, Macadamia Nut, Neem
+- ✅ All oils connected via a database (supabase)
 - ✅ SAP values for both lye types
 - ✅ Complete fatty acid profiles
 - ✅ Iodine and INS values

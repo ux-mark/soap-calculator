@@ -20,6 +20,8 @@ export function SelectedOilsList() {
     recommendations,
     results,
     inputs,
+    inspectedOilIds,
+    toggleOilInspection,
   } = useCalculator();
 
   // Calculate suggested percentages for ALL selected oils
@@ -93,11 +95,29 @@ export function SelectedOilsList() {
           {selectedOils.map((oil) => {
             const suggestedPercentage = suggestedPercentages.get(oil.id);
             const hasSuggestion = suggestedPercentage !== undefined;
+            const isInspected = inspectedOilIds.includes(oil.id);
             
             return (
               <div
                 key={oil.id}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                onClick={() => toggleOilInspection(oil.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleOilInspection(oil.id);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-pressed={isInspected}
+                aria-label={`${isInspected ? "Currently comparing" : "Click to compare"} ${oil.name}`}
+                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all
+                  ${isInspected 
+                    ? "bg-blue-100 border-2 border-blue-500 shadow-md" 
+                    : "bg-gray-50 border-2 border-transparent hover:bg-gray-100 hover:border-gray-300"
+                  }
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                `}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -111,13 +131,18 @@ export function SelectedOilsList() {
                         {suggestedPercentage}%
                       </Badge>
                     )}
+                    {isInspected && (
+                      <Badge className="text-xs bg-blue-600 text-white">
+                        Comparing
+                      </Badge>
+                    )}
                   </div>
                   {oil.category && (
                     <p className="text-xs text-gray-500">{oil.category}</p>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   <div className="w-24">
                     <div className="flex items-center gap-1">
                       <Input

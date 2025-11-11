@@ -24,6 +24,7 @@ export interface OilData {
 export interface SelectedOil extends OilData {
   percentage: number;
   weight?: number;
+  isInspecting?: boolean; // UI state for oil inspection feature
 }
 
 // Soap quality metrics
