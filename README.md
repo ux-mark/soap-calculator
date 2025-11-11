@@ -5,7 +5,7 @@ A modern, data-driven web application for creating optimal cold process soap rec
 ## Features
 
 ### 🧪 Core Functionality
-- **Comprehensive Oil Database**: 20+ oils with complete fatty acid profiles and SAP values
+- **Comprehensive Oil Database**: 149+ oils stored in Supabase with complete fatty acid profiles and SAP values
 - **Real-time Calculations**: Instant lye, water, and recipe calculations
 - **Seven Soap Quality Metrics**: Hardness, Cleansing, Conditioning, Bubbly, Creamy, Iodine, and INS values
 - **Eight Fatty Acid Profiles**: Complete breakdown of all major fatty acids
@@ -39,6 +39,7 @@ A modern, data-driven web application for creating optimal cold process soap rec
 - **Styling**: Tailwind CSS 4.1
 - **UI Components**: Shadcn UI + Radix UI
 - **State Management**: React Context API
+- **Database**: Supabase (PostgreSQL)
 - **Icons**: Lucide React
 
 ## Getting Started
@@ -92,28 +93,35 @@ soap-calculator/
 │   │   └── CalculationResults.tsx
 │   └── ui/                  # Reusable UI components (Shadcn)
 ├── contexts/
-│   └── CalculatorContext.tsx # Global state management
+│   ├── CalculatorContext.tsx # Calculator state management
+│   └── OilsContext.tsx      # Oil data from Supabase
 ├── lib/
 │   ├── calculations.ts      # All calculation logic
-│   ├── oilData.ts          # Oil database
+│   ├── oilData.ts          # (DEPRECATED) Use Supabase instead
 │   ├── recommendations.ts   # Recommendation engine
 │   ├── types.ts            # TypeScript types
-│   └── utils.ts            # Utility functions
+│   ├── utils.ts            # Utility functions
+│   ├── services/
+│   │   └── oils.ts         # Supabase oil data access
+│   └── supabase/           # Supabase client configuration
 └── public/                  # Static assets
 ```
 
 ## How It Works
 
-### Oil Selection
-1. Browse or search the oil database
-2. Click on oils to add them to your recipe
-3. Adjust percentages until they total 100%
+### Oil Selection & Data Flow
+1. **OilsProvider** fetches all available oils from Supabase on app load
+2. **OilSelector** displays oils from the centralized OilsContext
+3. Click on oils to add them to your recipe
+4. Adjust percentages until they total 100%
 
 ### Intelligent Recommendations
 - When you have < 50% oils selected, the system analyzes your current selection
+- **Recommendation engine** receives the full oils list and calculates compatibility scores
 - It calculates which oils would best complement your recipe
 - Incompatible oils are automatically disabled
 - Top 5 recommendations are highlighted with reasons
+- **All data comes from the same Supabase source** - no duplicates!
 
 ### Quality Calculation
 The calculator uses the same formulas as SoapCalc.net:
@@ -142,11 +150,11 @@ This calculator is a tool for recipe formulation only. The user is responsible f
 
 ## Future Enhancements
 
-- [ ] Supabase integration for saving recipes
+- [x] Supabase integration for saving recipes
 - [ ] User accounts and recipe sharing
+- [ ] Custom oil management (add your own oils)
 - [ ] Batch scaling calculator
 - [ ] Cost calculator
-- [ ] Additional oil database entries
 - [ ] Recipe templates (starter recipes)
 - [ ] Color and swirl designer
 - [ ] Multi-language support

@@ -18,6 +18,7 @@ import {
   getRecommendedOils,
   getIncompatibleOils,
 } from "@/lib/recommendations";
+import { useOils } from "./OilsContext";
 
 interface CalculatorContextValue {
   // State
@@ -62,6 +63,7 @@ export function CalculatorProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const { oils: availableOils } = useOils();
   const [selectedOils, setSelectedOils] = useState<SelectedOil[]>([]);
   const [inputs, setInputs] = useState<RecipeInputs>(DEFAULT_INPUTS);
   const [results, setResults] = useState<CalculationResults | null>(null);
@@ -157,12 +159,12 @@ export function CalculatorProvider({
         currentFattyAcids: newResults.fattyAcids,
       };
 
-      const newRecommendations = getRecommendedOils(recContext, inputs.soapType, 5);
+      const newRecommendations = getRecommendedOils(availableOils, recContext, inputs.soapType, 5);
       setRecommendations(newRecommendations);
 
       // Get incompatible oils for dynamic mode (when < 50% selected)
       if (totalPercentage < 50) {
-        const incompatible = getIncompatibleOils(recContext, inputs.soapType, 25);
+        const incompatible = getIncompatibleOils(availableOils, recContext, inputs.soapType, 25);
         setIncompatibleOilIds(incompatible);
       } else {
         setIncompatibleOilIds(new Set());
@@ -171,7 +173,7 @@ export function CalculatorProvider({
       setRecommendations([]);
       setIncompatibleOilIds(new Set());
     }
-  }, [selectedOils, inputs, validation.isValid]);
+  }, [selectedOils, inputs, validation.isValid, availableOils]);
 
   // Reset calculator
   const resetCalculator = useCallback(() => {

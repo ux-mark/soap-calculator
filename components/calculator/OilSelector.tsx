@@ -12,9 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Sparkles, AlertCircle } from "lucide-react";
-import { getAllAvailableOils, getOilCategories } from "@/lib/services/oils";
+import { getOilCategories } from "@/lib/services/oils";
 import type { OilData } from "@/lib/types";
 import { useCalculator } from "@/contexts/CalculatorContext";
+import { useOils } from "@/contexts/OilsContext";
 import { OilTile } from "./OilTile";
 import { getSuggestedPercentageForOil, getOilRecommendationDetail } from "@/lib/recommendations";
 
@@ -29,36 +30,24 @@ export function OilSelector() {
     inputs,
   } = useCalculator();
 
+  const { oils, isLoading, error } = useOils();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [oils, setOils] = useState<OilData[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>(["all"]);
 
-  // Fetch oils and categories from database on mount
+  // Fetch categories on mount
   useEffect(() => {
-    async function fetchData() {
+    async function fetchCategories() {
       try {
-        setIsLoading(true);
-        setError(null);
-        
-        const [oilsData, categoriesData] = await Promise.all([
-          getAllAvailableOils(), // Gets system oils + public custom oils
-          getOilCategories(),
-        ]);
-        
-        setOils(oilsData);
-        setCategories(categoriesData);
+        const categoriesData = await getOilCategories();
+        setCategories(["all", ...categoriesData]);
       } catch (err) {
-        console.error('Failed to fetch oils:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load oils');
-      } finally {
-        setIsLoading(false);
+        console.error('Failed to fetch categories:', err);
       }
     }
     
-    fetchData();
+    fetchCategories();
   }, []);
 
   // Get recommended oil IDs for easy lookup
@@ -253,7 +242,7 @@ export function OilSelector() {
                   
                   // Use the actual soap type from recipe inputs
                   const soapType = inputs.soapType === "liquid" ? "liquid" : "hard";
-                  recommendationDetail = getOilRecommendationDetail(oil, context, soapType);
+                  recommendationDetail = getOilRecommendationDetail(oils, oil, context, soapType);
                 }
                 
                 return (

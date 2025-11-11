@@ -12,7 +12,6 @@ import {
   BetterAlternative,
   ComparativeAnalysis,
 } from "./types";
-import { OILS_DATABASE } from "./oilData";
 import {
   calculateFattyAcidProfile,
   calculateSoapQualities,
@@ -786,6 +785,7 @@ function getFattyAcidValue(oil: OilData, acidName: string): number {
  * Find better alternatives for incompatible oils
  */
 function findBetterAlternatives(
+  availableOils: OilData[],
   oil: OilData,
   context: RecommendationContext,
   problems: IncompatibilityProblem[],
@@ -798,7 +798,7 @@ function findBetterAlternatives(
   problems.forEach(problem => {
     if (problem.type === "wrong_soap_type" && soapType === "liquid") {
       // Suggest high-oleic oils for liquid soap
-      const highOleicOils = OILS_DATABASE.filter(
+      const highOleicOils = availableOils.filter(
         o => !selectedOilIds.has(o.id) && o.fatty_acids.oleic > 60 && o.fatty_acids.palmitic + o.fatty_acids.stearic < 20
       );
       
@@ -813,7 +813,7 @@ function findBetterAlternatives(
     
     if (problem.type === "wrong_soap_type" && soapType === "hard") {
       // Suggest hardening oils for bar soap
-      const hardeningOils = OILS_DATABASE.filter(
+      const hardeningOils = availableOils.filter(
         o => !selectedOilIds.has(o.id) && (o.fatty_acids.palmitic > 25 || o.fatty_acids.stearic > 20)
       );
       
@@ -828,7 +828,7 @@ function findBetterAlternatives(
     
     if (problem.type === "too_similar") {
       // Suggest oils with different fatty acid profiles
-      const differentOils = OILS_DATABASE.filter(
+      const differentOils = availableOils.filter(
         o => !selectedOilIds.has(o.id) && calculateOilSimilarity(oil, o) < 0.5
       );
       
@@ -884,6 +884,7 @@ function generateComparativeAnalysis(
  * Generate display copy based on score and data
  */
 function generateDisplayCopy(
+  availableOils: OilData[],
   oil: OilData,
   score: number,
   fattyAcidContributions: FattyAcidContribution[],
@@ -972,7 +973,7 @@ function generateDisplayCopy(
     
     if (betterAlternatives.length > 0) {
       const alt = betterAlternatives[0];
-      const altOil = OILS_DATABASE.find(o => o.id === alt.oilId);
+      const altOil = availableOils.find(o => o.id === alt.oilId);
       if (altOil) {
         parts.push(`Try ${altOil.name} instead: ${alt.whyBetter}`);
       }
@@ -988,6 +989,7 @@ function generateDisplayCopy(
  * Generate detailed recommendation for an oil
  */
 function generateRecommendationDetail(
+  availableOils: OilData[],
   oil: OilData,
   context: RecommendationContext,
   score: number,
@@ -1021,11 +1023,12 @@ function generateRecommendationDetail(
   const comparativeAnalysis = generateComparativeAnalysis(oil, context);
   const problems = identifyIncompatibilityProblems(oil, context, qualityProjections, soapType);
   const betterAlternatives = problems.length > 0 
-    ? findBetterAlternatives(oil, context, problems, soapType) 
+    ? findBetterAlternatives(availableOils, oil, context, problems, soapType) 
     : undefined;
   
   // Generate display copy
   const displayCopy = generateDisplayCopy(
+    availableOils,
     oil,
     score,
     fattyAcidContributions,
@@ -1070,6 +1073,7 @@ function generateRecommendationDetail(
  * This can be used for any oil, whether selected, recommended, or just browsing
  */
 export function getOilRecommendationDetail(
+  availableOils: OilData[],
   oil: OilData,
   context: RecommendationContext,
   soapType: "hard" | "liquid" = "hard"
@@ -1081,6 +1085,7 @@ export function getOilRecommendationDetail(
   );
   
   return generateRecommendationDetail(
+    availableOils,
     oil,
     context,
     score,
@@ -1094,6 +1099,7 @@ export function getOilRecommendationDetail(
  * Returns top N recommendations sorted by score
  */
 export function getRecommendedOils(
+  availableOils: OilData[],
   context: RecommendationContext,
   soapType: "hard" | "liquid" = "hard",
   maxRecommendations: number = 5
@@ -1102,7 +1108,7 @@ export function getRecommendedOils(
   const selectedOilIds = new Set(context.currentOils.map((oil) => oil.id));
 
   // Calculate scores for all non-selected oils
-  const recommendations: OilRecommendation[] = OILS_DATABASE.filter(
+  const recommendations: OilRecommendation[] = availableOils.filter(
     (oil) => !selectedOilIds.has(oil.id)
   ).map((oil) => {
     const { score, reason, suggestedPercentage, predictedImpact, factors } = calculateCompatibilityScore(
@@ -1113,6 +1119,7 @@ export function getRecommendedOils(
     
     // Generate detailed recommendation
     const detail = generateRecommendationDetail(
+      availableOils,
       oil,
       context,
       score,
@@ -1154,6 +1161,7 @@ export function isOilCompatible(
  * Get oils that should be disabled (incompatible with current selection)
  */
 export function getIncompatibleOils(
+  availableOils: OilData[],
   context: RecommendationContext,
   soapType: "hard" | "liquid" = "hard",
   threshold: number = 25
@@ -1162,7 +1170,7 @@ export function getIncompatibleOils(
 
   const incompatibleIds = new Set<string>();
 
-  OILS_DATABASE.forEach((oil) => {
+  availableOils.forEach((oil) => {
     if (selectedOilIds.has(oil.id)) return; // Skip already selected oils
 
     const { score } = calculateCompatibilityScore(oil, context, soapType);

@@ -1,6 +1,7 @@
 "use client";
 
 import { CalculatorProvider } from "@/contexts/CalculatorContext";
+import { OilsProvider } from "@/contexts/OilsContext";
 import { InputSection } from "@/components/calculator/InputSection";
 import { SelectedOilsList } from "@/components/calculator/SelectedOilsList";
 import { OilSelector } from "@/components/calculator/OilSelector";
@@ -66,9 +67,10 @@ function CalculatorContent() {
 
 export default function Home() {
   return (
-    <CalculatorProvider>
-      <CalculatorContent />
-    </CalculatorProvider>
+    <OilsProvider>
+      <CalculatorProvider>
+        <CalculatorContent />
+      </CalculatorProvider>
+    </OilsProvider>
   );
 }
-
