@@ -388,3 +388,114 @@ export function calculateIndividualOilContribution(
   };
 }
 
+/**
+ * Convert percentage to weight (grams)
+ * Formula: grams = (percentage / 100) × totalBatchWeight
+ */
+export function percentageToWeight(
+  percentage: number,
+  totalBatchWeight: number
+): number {
+  return Math.round((percentage / 100) * totalBatchWeight * 100) / 100;
+}
+
+/**
+ * Convert weight (grams) to percentage
+ * Formula: percentage = (grams / totalBatchWeight) × 100
+ */
+export function weightToPercentage(
+  weight: number,
+  totalBatchWeight: number
+): number {
+  if (totalBatchWeight === 0) return 0;
+  return Math.round((weight / totalBatchWeight) * 100 * 10) / 10;
+}
+
+/**
+ * Sync oil values when switching input modes
+ * Converts between percentage and weight based on the new mode
+ */
+export function syncOilInputMode(
+  oil: SelectedOil,
+  newMode: "percentage" | "weight",
+  totalBatchWeight: number
+): SelectedOil {
+  if (newMode === "weight") {
+    // Switching to weight mode: calculate weight from percentage
+    const weight = percentageToWeight(oil.percentage, totalBatchWeight);
+    return {
+      ...oil,
+      inputMode: "weight",
+      inputValue: weight,
+      weight: weight,
+    };
+  } else {
+    // Switching to percentage mode: calculate percentage from weight
+    const percentage = weightToPercentage(oil.weight || 0, totalBatchWeight);
+    return {
+      ...oil,
+      inputMode: "percentage",
+      inputValue: percentage,
+      percentage: percentage,
+    };
+  }
+}
+
+/**
+ * Recalculate all oils when batch weight changes
+ * Updates weights for oils in weight mode, keeps percentages for oils in percentage mode
+ */
+export function recalculateOilsForBatchWeight(
+  oils: SelectedOil[],
+  newBatchWeight: number
+): SelectedOil[] {
+  return oils.map((oil) => {
+    if (oil.inputMode === "weight") {
+      // In weight mode: recalculate percentage from weight
+      const percentage = weightToPercentage(oil.inputValue, newBatchWeight);
+      return {
+        ...oil,
+        percentage: percentage,
+        weight: oil.inputValue,
+      };
+    } else {
+      // In percentage mode: recalculate weight from percentage
+      const weight = percentageToWeight(oil.percentage, newBatchWeight);
+      return {
+        ...oil,
+        weight: weight,
+      };
+    }
+  });
+}
+
+/**
+ * Update oil's input value and sync percentage/weight
+ */
+export function updateOilInputValue(
+  oil: SelectedOil,
+  newValue: number,
+  totalBatchWeight: number
+): SelectedOil {
+  if (oil.inputMode === "weight") {
+    // User is entering weight: calculate percentage
+    const percentage = weightToPercentage(newValue, totalBatchWeight);
+    return {
+      ...oil,
+      inputValue: newValue,
+      weight: newValue,
+      percentage: percentage,
+    };
+  } else {
+    // User is entering percentage: calculate weight
+    const weight = percentageToWeight(newValue, totalBatchWeight);
+    return {
+      ...oil,
+      inputValue: newValue,
+      percentage: newValue,
+      weight: weight,
+    };
+  }
+}
+
+

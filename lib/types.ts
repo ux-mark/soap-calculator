@@ -24,6 +24,8 @@ export interface OilData {
 export interface SelectedOil extends OilData {
   percentage: number;
   weight?: number;
+  inputMode: "percentage" | "weight"; // Whether user is inputting % or weight
+  inputValue: number; // The actual value user entered (in current mode)
   isInspecting?: boolean; // UI state for oil inspection feature
 }
 
@@ -57,6 +59,7 @@ export interface QualityRanges {
 // Recipe data
 export interface RecipeInputs {
   totalOilWeight: number;
+  totalBatchWeight: number; // For weight mode calculations
   unit: "g" | "oz" | "lb";
   soapType: "hard" | "liquid";
   lyeType: "NaOH" | "KOH";

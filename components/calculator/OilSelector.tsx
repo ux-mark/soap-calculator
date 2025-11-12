@@ -168,8 +168,18 @@ export function OilSelector() {
                   predictedImpact={rec.predictedImpact}
                   recommendationScore={rec.score}
                   recommendationDetail={rec.detail}
-                  onSelect={() => addOil({ ...rec.oil, percentage: 0 })}
-                  onQuickAdd={(percentage: number) => addOil({ ...rec.oil, percentage })}
+                  onSelect={() => addOil({ 
+                    ...rec.oil, 
+                    percentage: 0, 
+                    inputMode: "percentage",
+                    inputValue: 0 
+                  })}
+                  onQuickAdd={(percentage: number) => addOil({ 
+                    ...rec.oil, 
+                    percentage,
+                    inputMode: "percentage",
+                    inputValue: percentage
+                  })}
                 />
               ))}
             </div>
@@ -256,7 +266,12 @@ export function OilSelector() {
                     }
                     suggestedPercentage={suggestedPercentage}
                     recommendationDetail={recommendationDetail}
-                    onSelect={() => addOil({ ...oil, percentage: 0 })}
+                    onSelect={() => addOil({ 
+                      ...oil, 
+                      percentage: 0,
+                      inputMode: "percentage",
+                      inputValue: 0
+                    })}
                   />
                 );
               })}

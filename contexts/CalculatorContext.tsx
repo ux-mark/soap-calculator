@@ -13,6 +13,9 @@ import {
   calculateFattyAcidProfile,
   calculateSoapQualities,
   validateOilPercentages,
+  syncOilInputMode,
+  recalculateOilsForBatchWeight,
+  updateOilInputValue,
 } from "@/lib/calculations";
 import {
   getRecommendedOils,
@@ -33,6 +36,9 @@ interface CalculatorContextValue {
   addOil: (oil: SelectedOil) => void;
   removeOil: (oilId: string) => void;
   updateOilPercentage: (oilId: string, percentage: number) => void;
+  updateOilInputValue: (oilId: string, value: number) => void; // New: update input value (% or g)
+  updateOilInputMode: (oilId: string, mode: "percentage" | "weight") => void; // New: toggle input mode
+  updateBatchWeight: (weight: number) => void; // New: update batch weight
   updateInputs: (newInputs: Partial<RecipeInputs>) => void;
   recalculate: () => void;
   resetCalculator: () => void;
@@ -41,6 +47,7 @@ interface CalculatorContextValue {
   // Validation
   isValid: boolean;
   totalPercentage: number;
+  totalWeight: number; // New: total weight of all oils
 }
 
 const CalculatorContext = createContext<CalculatorContextValue | undefined>(
@@ -49,6 +56,7 @@ const CalculatorContext = createContext<CalculatorContextValue | undefined>(
 
 const DEFAULT_INPUTS: RecipeInputs = {
   totalOilWeight: 500,
+  totalBatchWeight: 500, // Default batch weight same as oil weight
   unit: "g",
   soapType: "hard",
   lyeType: "NaOH",
@@ -86,7 +94,13 @@ export function CalculatorProvider({
         if (prev.find((o) => o.id === oil.id)) {
           return prev;
         }
-        return [...prev, oil];
+        // Set default input mode to percentage
+        const newOil = {
+          ...oil,
+          inputMode: "percentage" as const,
+          inputValue: oil.percentage,
+        };
+        return [...prev, newOil];
       });
     },
     []
@@ -103,13 +117,52 @@ export function CalculatorProvider({
   const updateOilPercentage = useCallback(
     (oilId: string, percentage: number) => {
       setSelectedOils((prev) =>
+        prev.map((oil) => {
+          if (oil.id === oilId) {
+            // Also calculate the weight based on the new percentage
+            const weight = (percentage / 100) * inputs.totalBatchWeight;
+            return { ...oil, percentage, weight };
+          }
+          return oil;
+        })
+      );
+    },
+    [inputs.totalBatchWeight]
+  );
+
+  // Update oil input value (handles both % and weight modes)
+  const updateOilInputValueAction = useCallback(
+    (oilId: string, value: number) => {
+      setSelectedOils((prev) =>
         prev.map((oil) =>
-          oil.id === oilId ? { ...oil, percentage } : oil
+          oil.id === oilId
+            ? updateOilInputValue(oil, value, inputs.totalBatchWeight)
+            : oil
         )
       );
     },
-    []
+    [inputs.totalBatchWeight]
   );
+
+  // Update oil input mode (toggle between % and weight)
+  const updateOilInputMode = useCallback(
+    (oilId: string, mode: "percentage" | "weight") => {
+      setSelectedOils((prev) =>
+        prev.map((oil) =>
+          oil.id === oilId
+            ? syncOilInputMode(oil, mode, inputs.totalBatchWeight)
+            : oil
+        )
+      );
+    },
+    [inputs.totalBatchWeight]
+  );
+
+  // Update batch weight and recalculate all oils
+  const updateBatchWeight = useCallback((weight: number) => {
+    setInputs((prev) => ({ ...prev, totalBatchWeight: weight }));
+    setSelectedOils((prev) => recalculateOilsForBatchWeight(prev, weight));
+  }, []);
 
   // Update inputs
   const updateInputs = useCallback((newInputs: Partial<RecipeInputs>) => {
@@ -190,6 +243,9 @@ export function CalculatorProvider({
     recalculate();
   }, [recalculate]);
 
+  // Calculate total weight
+  const totalWeight = selectedOils.reduce((sum, oil) => sum + (oil.weight || 0), 0);
+
   const value: CalculatorContextValue = {
     selectedOils,
     inputs,
@@ -200,12 +256,16 @@ export function CalculatorProvider({
     addOil,
     removeOil,
     updateOilPercentage,
+    updateOilInputValue: updateOilInputValueAction,
+    updateOilInputMode,
+    updateBatchWeight,
     updateInputs,
     recalculate,
     resetCalculator,
     toggleOilInspection,
     isValid: validation.isValid,
     totalPercentage: validation.totalPercentage,
+    totalWeight,
   };
 
   return (

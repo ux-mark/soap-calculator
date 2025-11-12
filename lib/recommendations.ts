@@ -78,7 +78,7 @@ function calculatePredictedImpact(
   // Simulate adding this oil
   const testOils: SelectedOil[] = [
     ...context.currentOils,
-    { ...oil, percentage },
+    { ...oil, percentage, inputMode: "percentage", inputValue: percentage },
   ];
   
   // Normalize percentages
@@ -200,7 +200,7 @@ function calculateCompatibilityScore(
   );
   const testOils: SelectedOil[] = [
     ...context.currentOils,
-    { ...oil, percentage: testPercentage },
+    { ...oil, percentage: testPercentage, inputMode: "percentage", inputValue: testPercentage },
   ];
 
   // Normalize percentages
@@ -539,7 +539,7 @@ function calculateQualityProjections(
   // Simulate adding this oil
   const testOils: SelectedOil[] = [
     ...context.currentOils,
-    { ...oil, percentage },
+    { ...oil, percentage, inputMode: "percentage", inputValue: percentage },
   ];
   
   // Normalize percentages
