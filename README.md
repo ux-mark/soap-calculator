@@ -135,6 +135,37 @@ The calculator uses the same formulas as SoapCalc.net:
 - **Iodine** = Weighted average of individual oil iodine values
 - **INS** = Weighted average of individual oil INS values
 
+## Making Liquid Soap
+
+When using the calculator with KOH (potassium hydroxide) for liquid soap, follow this traditional slow cooker method:
+
+### Method
+
+1. Put oils into slow cooker on high to heat them up
+2. Mix lye (KOH) into water and stir until all flakes are dissolved
+3. Change slow cooker to low heat and slowly pour in the lye and water solution
+4. Stir the oil and solution together
+5. When mixed, use a stick blender to bring the mixture to trace. This can take from 10-20 mins. Do so slowly so as not to burn out the stick blender
+6. Put the lid on the slow cooker and leave to gently heat for 1-2 hours. Mix every 20-30 mins
+7. When the mixture resembles vaseline, it is ready
+
+### Liquify
+
+1. Weigh out amount of soap mixture to dilute
+2. Calculate x1.6 times the weight of glycerine (at 20%) and distilled water (at 80%)
+3. Put glycerine and water into a saucepan and bring to the boil
+4. Add the soap mixture to the boiling mixture and cover it with as much liquid as possible
+5. Cover and leave sit - mix every now and then
+6. When cool, bring all the mixture to the boil again. Slowly mashing the lumps
+7. Do this over a period of 2-3 days until everything is dissolved
+
+### Thicken
+
+1. Guar gum should be 1% total liquid soap weight
+2. Mix guar gum with glycerin approx 4% of total weight and leave sit
+3. Slowly mix into liquid soap and gently heat to a max of 60°C. Mix until all combined
+4. Leave to cool
+
 ## Data Attribution
 
 This project uses oil data from SoapCalc (soapcalc.net) under fair use for educational and non-commercial purposes. All saponification values, fatty acid profiles, and quality calculations are based on SoapCalc's widely-trusted database.

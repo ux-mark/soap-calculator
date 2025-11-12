@@ -141,25 +141,68 @@ export function CalculationResults() {
           <h4 className="font-semibold text-sm text-gray-700 mb-3">
             Basic Instructions
           </h4>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
-            <li>Weigh all oils accurately and melt hard oils/butters together</li>
-            <li>
-              Wearing safety gear, carefully mix {results.lyeWeight} {inputs.unit} of{" "}
-              {inputs.lyeType} with {results.waterWeight} {inputs.unit} of distilled water
-            </li>
-            <li>Allow lye solution to cool to 100-110°F (38-43°C)</li>
-            <li>Heat oils to 100-110°F (38-43°C)</li>
-            <li>
-              Slowly pour lye solution into oils and blend with stick blender until
-              trace
-            </li>
-            {results.fragranceWeight > 0 && (
-              <li>Add {results.fragranceWeight} {inputs.unit} of fragrance and mix well</li>
-            )}
-            <li>Pour into molds and insulate for 24-48 hours</li>
-            <li>Unmold and cut after 24-48 hours</li>
-            <li>Cure for 4-6 weeks in a cool, dry place</li>
-          </ol>
+          
+          {inputs.lyeType === "KOH" ? (
+            // Liquid Soap Instructions
+            <div className="space-y-4">
+              <div>
+                <h5 className="font-medium text-sm text-gray-800 mb-2">Method</h5>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
+                  <li>Put oils into slow cooker on high to heat them up</li>
+                  <li>Mix {results.lyeWeight} {inputs.unit} of lye (KOH) into {results.waterWeight} {inputs.unit} of water and stir until all flakes are dissolved</li>
+                  <li>Change slow cooker to low heat and slowly pour in the lye and water solution</li>
+                  <li>Stir the oil and solution together</li>
+                  <li>When mixed, use a stick blender to bring the mixture to trace. This can take from 10-20 mins. Do so slowly so as not to burn out the stick blender</li>
+                  <li>Put the lid on the slow cooker and leave to gently heat for 1-2 hours. Mix every 20-30 mins</li>
+                  <li>When the mixture resembles vaseline, it is ready</li>
+                </ol>
+              </div>
+
+              <div>
+                <h5 className="font-medium text-sm text-gray-800 mb-2">Liquify</h5>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
+                  <li>Weigh out amount of soap mixture to dilute</li>
+                  <li>Calculate x1.6 times the weight of glycerine (at 20%) and distilled water (at 80%)</li>
+                  <li>Put glycerine and water into a saucepan and bring to the boil</li>
+                  <li>Add the soap mixture to the boiling mixture and cover it with as much liquid as possible</li>
+                  <li>Cover and leave sit - mix every now and then</li>
+                  <li>When cool, bring all the mixture to the boil again. Slowly mashing the lumps</li>
+                  <li>Do this over a period of 2-3 days until everything is dissolved</li>
+                </ol>
+              </div>
+
+              <div>
+                <h5 className="font-medium text-sm text-gray-800 mb-2">Thicken</h5>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
+                  <li>Guar gum should be 1% total liquid soap weight</li>
+                  <li>Mix guar gum with glycerin approx 4% of total weight and leave sit</li>
+                  <li>Slowly mix into liquid soap and gently heat to a max of 60°C. Mix until all combined</li>
+                  <li>Leave to cool</li>
+                </ol>
+              </div>
+            </div>
+          ) : (
+            // Bar Soap Instructions
+            <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
+              <li>Weigh all oils accurately and melt hard oils/butters together</li>
+              <li>
+                Wearing safety gear, carefully mix {results.lyeWeight} {inputs.unit} of{" "}
+                {inputs.lyeType} with {results.waterWeight} {inputs.unit} of distilled water
+              </li>
+              <li>Allow lye solution to cool to 100-110°F (38-43°C)</li>
+              <li>Heat oils to 100-110°F (38-43°C)</li>
+              <li>
+                Slowly pour lye solution into oils and blend with stick blender until
+                trace
+              </li>
+              {results.fragranceWeight > 0 && (
+                <li>Add {results.fragranceWeight} {inputs.unit} of fragrance and mix well</li>
+              )}
+              <li>Pour into molds and insulate for 24-48 hours</li>
+              <li>Unmold and cut after 24-48 hours</li>
+              <li>Cure for 4-6 weeks in a cool, dry place</li>
+            </ol>
+          )}
         </div>
 
         {/* Safety Warning */}
