@@ -20,13 +20,13 @@ export const HARD_SOAP_QUALITY_RANGES: QualityRanges = {
 
 // Quality ranges for LIQUID SOAP based on specialized formulation requirements
 export const LIQUID_SOAP_QUALITY_RANGES: QualityRanges = {
-  hardness: { min: 5, max: 15, ideal: { min: 8, max: 12 } },
-  cleansing: { min: 10, max: 20, ideal: { min: 12, max: 16 } },
-  conditioning: { min: 65, max: 80, ideal: { min: 72, max: 77 } },
-  bubbly: { min: 5, max: 12, ideal: { min: 7, max: 10 } },
-  creamy: { min: 50, max: 70, ideal: { min: 58, max: 65 } },
-  iodine: { min: 65, max: 85, ideal: { min: 72, max: 78 } },
-  ins: { min: 70, max: 90, ideal: { min: 78, max: 85 } },
+  hardness: { min: 10, max: 25, ideal: { min: 15, max: 20 } },
+  cleansing: { min: 5, max: 15, ideal: { min: 8, max: 12 } },
+  conditioning: { min: 60, max: 85, ideal: { min: 65, max: 75 } },
+  bubbly: { min: 15, max: 30, ideal: { min: 18, max: 25 } },
+  creamy: { min: 20, max: 40, ideal: { min: 25, max: 35 } },
+  iodine: { min: 50, max: 85, ideal: { min: 55, max: 75 } },
+  ins: { min: 90, max: 130, ideal: { min: 100, max: 120 } },
 };
 
 // Legacy export for backward compatibility - defaults to hard soap
